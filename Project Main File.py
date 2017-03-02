@@ -3,11 +3,16 @@ import datetime
 import numpy
 import cv2
 
-capture = cv2.VideoCapture(0)
+detectFace = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_frontalface_default.xml')
+detectEyes = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_eye.xml')
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('output.avi', fourcc, 20.0, (640,480))
-count = 0
+num = 0
+x = 0
+y = 0
+z = 0
 firstFrame = None
+capture = cv2.VideoCapture(0)
 
 while(True):
     # Capture frame-by-frame
@@ -15,11 +20,12 @@ while(True):
     (grabbed2, frame2) = capture.read()
     ret, frame1 = capture.read()
     diff = frame - frame2
-    avg_color_row = numpy.average(diff, axis = 0)
-    avg_color = numpy.average(avg_color_row, axis = 0)
-    #count +=1
-    #diff = (diff)/(count * 100)
-            
+    #avg_color_row = numpy.average(diff, axis = 0)
+    #avg_color = numpy.average(avg_color_row, axis = 0)
+
+    newDiff = ((diff[x][y][z]) / 3)
+    newDiff = float("{0:.2f}".format(newDiff))
+    print (newDiff)
     if not grabbed:
         break
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
@@ -32,16 +38,17 @@ while(True):
     if firstFrame is None:
         firstFrame = gray
         continue
-    frameDelta = cv2.absdiff(firstFrame, gray)
-    threshold = cv2.threshold(frameDelta, 25, 255, cv2.THRESH_BINARY)[1]
-    threshold = cv2.dilate(threshold, None, iterations = 2)
-    (cnts, _, _) = cv2.findContours(threshold.copy(), cv2.RETR_EXTERNAL,
-                cv2.CHAIN_APPROX_SIMPLE)
-    for a in cnts:
-        (x,y,w,h) = cv2.boundingRect(a)
-        cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0), 2)
-        cv2.rectangle(frame2, (x,y), (x+w, y+h), (0,255,0), 2)
-        text = avg_color
+    #Face Detection starts here
+    faces = detectFace.detectMultiScale(gray, 1.3, 5)
+    for (x,y,w,h) in faces:
+        num +=1
+        cv2.rectangle(frame, (x,y), (x+w, y+h), (0,255,0),2)
+        g = gray[y: y+h, x: x+w]
+        color = frame[y: y+h, x: x+w]
+        eyes = detectEyes.detectMultiScale(g)
+        for (ex, ey, ew, eh) in eyes:
+            cv2.rectangle(color,(ex,ey),(ex+ew, ey+eh),(0,255,0),2)
+    text = newDiff
         
     cv2.putText(frame, "Room Status: {}".format(text), (10,20),
                cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0,255,0),2)
@@ -55,15 +62,10 @@ while(True):
                (0,255,0),1)
         
     cv2.imshow("Security Camera", frame)
-    cv2.imshow("Threshold", threshold)
-    cv2.imshow("Delta Frame", frameDelta)
-    while(capture.isOpened()):
-        if ret == True:
-            out.write(frame1)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
-                break
-            else:
-                break
+    if ret == True:
+        out.write(frame1)
+        if cv2.waitKey(1) & 0xFF == ord('q'):
+            break
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 
