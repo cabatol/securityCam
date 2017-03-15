@@ -1,19 +1,25 @@
 import numpy as np
+import threading
+import logging
 import datetime
 import time
 import numpy
 import cv2
+import os
 
 detectFace = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_frontalface_default.xml')
 detectEyes = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_eye.xml')
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('Security Footage.avi', fourcc, 5.0, (640,480))
-t0 = time.time()
+time_count = 0
+start_time = 0
+end_time = 0
 x = 0
 y = 0
 z = 0
 firstFrame = None
 capture = cv2.VideoCapture(0)
+isRecording = False
 
 while(True):
     # Capture frame-by-frame
@@ -25,12 +31,19 @@ while(True):
     frameDelta = cv2.absdiff(gray, gray2)
     ret, frameDelta = cv2.threshold(frameDelta, 5, 1, cv2.THRESH_BINARY)
     finalPixel = ((np.sum(frameDelta) / np.size(frameDelta)) * 100)
-
-    if(finalPixel > 25):
-        temp = t0 + 15
-        while(t0 != temp):
-            out.write(frame)
     
+    if (finalPixel > 30 and not isRecording):
+            start_time = time.time()
+            isRecording = True
+    if (isRecording):
+        out.write(frame)
+
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    if(isRecording and elapsed_time >= 10):
+        out.release()
+        isRecording = False
+                
     if not grabbed:
         break
     
@@ -57,7 +70,7 @@ while(True):
     text = float("{0:.2f}".format(text))
         
     cv2.putText(frame, "Pixels Changed: {}".format(text), (10,20),
-               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (124,255,0),2)
+               cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0),2)
     cv2.putText(frame2, "Pixels Changed: {}".format(text), (10,20),
                cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0,255,0),2)
     cv2.putText(frame, datetime.datetime.now().strftime("%A %d %B %Y %I:%M:%S%p"),
@@ -68,11 +81,9 @@ while(True):
                (0,255,0),1)
         
     cv2.imshow("Security Camera", frame)
-
+        
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 # When everything done, release the capture
 capture.release()
-out.release()
 cv2.destroyAllWindows()
-
