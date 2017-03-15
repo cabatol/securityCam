@@ -48,3 +48,4 @@ while(scan):
 		changed  = (diff * 100) / (images[0].size[0] * images[0].size[1])
 		print str(changed) + "% changed."
 		images[1] = images[0]
+#Done
