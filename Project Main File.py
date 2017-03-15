@@ -1,3 +1,15 @@
+#
+# CST 205 
+# Project 2 - Team 33
+# Oscar Ramirez, Chino Abatol, Justin Tyler
+# Security Camera Code
+# Description: Code uses camera to judge whether there is movement in the room.
+#              If there is movement in the room the code will send an email to
+#              the user with a recording of the movement captured. The camera will
+#              stay on, monitoring for movement until prompted to close by the user.#
+#
+
+
 import numpy as np
 import smtplib, os
 import datetime
