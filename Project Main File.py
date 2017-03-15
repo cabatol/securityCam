@@ -1,22 +1,21 @@
 import numpy as np
-import threading
-import logging
+import smtplib, os
 import datetime
 import time
 import numpy
 import cv2
-import os
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+from email.mime.base import MIMEBase
+from email.utils import COMMASPACE, formatdate
+from email import encoders
 
 detectFace = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_frontalface_default.xml')
 detectEyes = cv2.CascadeClassifier('C:\\opencv\\build\\etc\\haarcascades\\haarcascade_eye.xml')
 fourcc = cv2.VideoWriter_fourcc(*'XVID')
 out = cv2.VideoWriter('Security Footage.avi', fourcc, 5.0, (640,480))
-time_count = 0
 start_time = 0
 end_time = 0
-x = 0
-y = 0
-z = 0
 firstFrame = None
 capture = cv2.VideoCapture(0)
 isRecording = False
@@ -85,5 +84,32 @@ while(True):
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
 # When everything done, release the capture
+from_address = "cst205team33@gmail.com"
+to_address = "oscarsramirez@student.hartnell.edu"
+files = []
+
+msg = MIMEMultipart()
+msg['From'] = from_address
+msg['To'] = COMMASPACE.join(to_address)
+msg['Date'] = formatdate(localtime = True)
+msg['Subject'] = "Security Footage"
+
+body = "Here is the file of the footage"
+
+msg.attach(MIMEText(body))
+
+part = MIMEBase('application', 'octet-stream')
+part.set_payload(open("Security Footage.avi", "rb").read())
+encoders.encode_base64(part)
+part.add_header('Content-Disposition', 'attachment; filename= "Security Footage.avi"')
+msg.attach(part)
+
+server = smtplib.SMTP('smtp.gmail.com', 587)
+server.starttls()
+server.login(from_address, "SecurityCam")
+text = msg.as_string()
+server.sendmail(from_address, to_address, text)
+server.quit()
+
 capture.release()
 cv2.destroyAllWindows()
