@@ -1,29 +1,3 @@
-import io
-import picamera
-from PIL import Image
-scan = True
-images = []
-
-
-color_offset = 25 # Adjusts for slight varitaions in color
-
-while(scan):
-	stream = io.BytesIO()
-	with picamera.PiCamera() as camera:
-		camera.resolution = (64,36) #Low Res For Faster Comparisons
-		camera.start_preview()
-		camera.capture(stream, format='jpeg')
-	stream.seek(0)	
-
-	if(len(images)!=2):
-		images.append(Image.open(stream))
-	else:
-		images[0] = Image.open(stream)
-	
-	x = 0
-	y = 0
-	diff = 0
-
 	if len(images) != 1:
 		#Start On X and Move Down Y 
 		while(x < images[0].size[0]):
